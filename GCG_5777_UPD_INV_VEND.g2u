@@ -1,0 +1,39 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Program Coded By: TCM
+'Coded On: 11/22/2019
+'Coded For: C3 Corporation
+'Paid for Via VT Hours
+'Program will grab a list of vendor names that parts were last purchased with and update the inventory master NAME_VENDOR field with this value.
+'PO's had to have been received to be picked up.
+
+'Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+V.Local.sSQL.Declare
+
+V.Local.sSQL.Set("SELECT V_INVENTORY_MST2.PART, V_INVENTORY_MST2.LOCATION, (SELECT TOP 1 V_RECEIVER_LOG.VENDOR FROM V_RECEIVER_LOG LEFT JOIN V_PO_LINES ON V_RECEIVER_LOG.PO = V_PO_LINES.PURCHASE_ORDER AND V_RECEIVER_LOG.PO_LINE = LEFT(V_PO_LINES.RECORD_NO,3) WHERE V_PO_LINES.PART = V_INVENTORY_MST2.PART AND V_PO_LINES.LOCATION = V_INVENTORY_MST2.LOCATION ORDER BY V_RECEIVER_LOG.LOG_DATE, V_RECEIVER_LOG.LOG_TIME DESC) AS VENDOR FROM V_INVENTORY_MST2 WHERE VENDOR <> '';")
+
+F.ODBC.Connection!CONGETLASTVENDOR.OpenCompanyConnection
+F.Intrinsic.Control.Try
+	F.Data.DataTable.CreateFromSQL("dtLASTVENDOR","CONGETLASTVENDOR",V.Local.sSQL,TRUE)
+F.Intrinsic.Control.Catch
+	F.ODBC.Connection!CONGETLASTVENDOR.Close
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+F.ODBC.Connection!CONGETLASTVENDOR.Close
+
+F.ODBC.Connection!CONUPDATELASTVENDOR.OpenCompanyConnection
+F.Intrinsic.Control.Try
+	F.Data.DataTable.SaveToDB("dtLASTVENDOR","CONUPDATELASTVENDOR","INVENTORY_MST2","PART*!*LOCATION",256,"PART@!@PART*!*LOCATION@!@LOCATION*!*VENDOR@!@NAME_VENDOR")
+F.Intrinsic.Control.Catch
+	F.ODBC.Connection!CONUPDATELASTVENDOR.Close
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+F.ODBC.Connection!CONUPDATELASTVENDOR.Close
+Program.Sub.Main.End
+
+Program.Sub.Comments.Start
+${$5$}$2.0.0.0$}$2
+${$6$}$tmaynard$}$20191122144946908$}$xKE69A43uzVyrAkuo5z9kVZmFtNSRbWX35g9kAHdzh1gN9+W2SoX+H5NX5U53GsGhvzelsY6C1aRRaYAVeEZ1w==
+Program.Sub.Comments.End
